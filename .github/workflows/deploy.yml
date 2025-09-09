@@ -1,9 +1,8 @@
 name: Deploy and Run WA Connection Test
 
-# Trigger this workflow on every push to the master branch
 on:
   push:
-    branches: ["master"]
+    branches: ["main"]
 
 jobs:
   deploy-and-test:
@@ -11,11 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Check out the repository code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Copy files to the server
       - name: Sync Files to Server
         uses: easingthemes/ssh-deploy@main
         with:
@@ -23,11 +20,12 @@ jobs:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USER }}
           SOURCE: "./"
-          TARGET: "~/wa-test" # Deploy to the wa-test directory in the user's home
+          TARGET: "~/wa-test"
           EXCLUDE: "/.github/, /.git/"
 
-      # 3. Connect to server via SSH and run Docker commands
-      - name: Run Remote SSH Commands
+      # --- IMPROVED SCRIPT ---
+      # This now runs the container in the foreground, streaming logs directly.
+      - name: Build and Run Test on Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -38,17 +36,10 @@ jobs:
             echo "✅ Logged into server. Navigating to deployment directory..."
             cd ~/wa-test
 
-            echo "🛑 Stopping and removing any old test container to ensure a clean run..."
-            docker compose -f docker-compose.test.yml down || true
+            echo "🛑 Stopping and removing any old test resources..."
+            docker compose -f docker-compose.test.yml down --volumes || true
 
-            echo "🔨 Building the new Docker image..."
-            docker compose -f docker-compose.test.yml build
-
-            echo "🚀 Starting the test container..."
-            docker compose -f docker-compose.test.yml up --detach
-
-            echo "⏳ Waiting 15 seconds for the container to initialize..."
-            sleep 15
-
-            echo "📋 Fetching container logs. Look for the QR code below:"
-            docker logs wa-connection-tester
+            echo "🚀 Building and running the test. Logs will stream below:"
+            # The '--build' flag ensures the image is rebuilt with the new code.
+            # Running 'up' without '-d' streams the logs until the container exits.
+            docker compose -f docker-compose.test.yml up --build
