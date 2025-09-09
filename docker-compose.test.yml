@@ -5,7 +5,8 @@ services:
     build: .
     container_name: wa-connection-tester
     restart: "no"
-    user: "${HOST_UID}:${HOST_GID}"
+    # --- FIX: The user is now defined inside the Dockerfile, so we don't need this. ---
+    # user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - wwebjs_auth_test_data:/data
 

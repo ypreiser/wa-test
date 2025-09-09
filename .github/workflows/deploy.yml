@@ -1,8 +1,7 @@
-# .github/workflows/deploy.yml
 name: Deploy and Run WA Connection Test
 on:
   push:
-    branches: ["master"]
+    branches: ["main"]
 jobs:
   deploy-and-test:
     name: Deploy to Server and Run Test
@@ -33,12 +32,7 @@ jobs:
             echo "🛑 Stopping and removing any old test resources..."
             docker compose -f docker-compose.test.yml down --volumes || true
 
-            # This cleanup command is no longer needed as we are not creating files in the project dir anymore.
-            # rm -rf wwebjs_auth_test
-
-            export HOST_UID=$(id -u)
-            export HOST_GID=$(id -g)
-            echo "ℹ️ Running container as user HOST_UID=${HOST_UID}, HOST_GID=${HOST_GID}"
+            # --- FIX: No longer need to export user IDs ---
 
             echo "🚀 Building and running the test. Logs will stream below:"
             docker compose -f docker-compose.test.yml up --build

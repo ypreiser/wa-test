@@ -1,5 +1,5 @@
 // index.js
-
+// index.js (Final Version)
 import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
 import qrcode from "qrcode-terminal";
@@ -14,21 +14,12 @@ const client = new Client({
     headless: true,
     args: [
       "--no-sandbox",
-
-      // --- THE DEFINITIVE FIX for "Failed to launch the browser process!" ---
-      // This flag is often required in Docker environments, especially when running as non-root.
-      // It disables a feature (the /dev/shm shared memory space) that can be restricted
-      // in some container runtimes, preventing Chrome from starting properly.
-      "--disable-dev-shm-usage",
-      // --- END FIX ---
-
       "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
       "--disable-gpu",
     ],
   },
 });
-
-// ... rest of the file is unchanged ...
 
 console.log("✅ Client configured. Adding event listeners and initializing...");
 
