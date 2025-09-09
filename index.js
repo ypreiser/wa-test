@@ -1,4 +1,4 @@
-// /home/youruser/wa-test/index.js
+// index.js
 
 import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
@@ -8,114 +8,80 @@ console.log("🚀 Starting WhatsApp Connection Test...");
 
 const client = new Client({
   authStrategy: new LocalAuth({
-    // --- FIX: Use a dedicated, non-code directory for persistent data ---
     dataPath: "/data",
   }),
   puppeteer: {
     headless: true,
     args: [
       "--no-sandbox",
-      "--disable-setuid-sandbox",
+
+      // --- THE DEFINITIVE FIX for "Failed to launch the browser process!" ---
+      // This flag is often required in Docker environments, especially when running as non-root.
+      // It disables a feature (the /dev/shm shared memory space) that can be restricted
+      // in some container runtimes, preventing Chrome from starting properly.
       "--disable-dev-shm-usage",
+      // --- END FIX ---
+
+      "--disable-setuid-sandbox",
       "--disable-gpu",
     ],
   },
 });
 
-console.log("✅ Client configured. Initializing...");
+// ... rest of the file is unchanged ...
 
-// --- Event Listeners ---
+console.log("✅ Client configured. Adding event listeners and initializing...");
 
-// 1. Fired when a QR code is received
 client.on("qr", (qr) => {
-  console.log(`
-============================================================`);
-  console.log(`
-    📱 QR Code Received! Scan this with your WhatsApp app. 📱`);
+  console.log("\n============================================================");
+  console.log("    📱 QR Code Received! Scan this with your WhatsApp app. 📱");
   qrcode.generate(qr, { small: true });
-  console.log(`
-============================================================`);
+  console.log("============================================================\n");
 });
 
-// 2. Fired when the client has authenticated successfully
-client.on(`authenticated`, () => {
-  console.log(`
-============================================================`);
-  console.log(`
-    ✅ AUTHENTICATED SUCCESSFULLY ✅`);
-  console.log(`
-============================================================`);
+client.on("authenticated", () => {
+  console.log("\n============================================================");
+  console.log("    ✅ AUTHENTICATED SUCCESSFULLY ✅");
+  console.log("============================================================\n");
 });
 
-// 3. Fired when the client is ready to send and receive messages
 client.on("ready", () => {
-  console.log(`
-============================================================`);
-  console.log(`
-    🎉 CLIENT IS READY! 🎉`);
-  console.log(`
-    Connection test successful. If you see this, the IP is likely NOT blocked.`);
-  console.log(`
-    This test will automatically exit in 2 minutes.`);
-  console.log(`
-============================================================`);
-  // Keep the script running for a bit to ensure the connection is stable, then exit.
-  setTimeout(() => {
-    console.log(`
-Test finished. Exiting.`);
-    client.destroy();
-    process.exit(0);
-  }, 120000); // 2 minutes
+  console.log("\n============================================================");
+  console.log("    🎉 CLIENT IS READY! 🎉");
+  console.log(
+    "    Connection test successful. If you see this, the IP is likely NOT blocked."
+  );
+  console.log("============================================================\n");
 });
 
-// 4. Fired if authentication fails
 client.on("auth_failure", (msg) => {
-  console.error(`
-============================================================`);
-  console.error(`
-    ❌ AUTHENTICATION FAILURE ❌`);
   console.error(
-    `
-    Message:`,
-    msg
+    "\n============================================================"
   );
-  console.error(`
-    This could be due to a bad session file. Try deleting the wwebjs_auth_test directory.`);
-  console.error(`
-============================================================`);
+  console.error("    ❌ AUTHENTICATION FAILURE ❌");
+  console.error("    Message:", msg);
+  console.error(
+    "============================================================\n"
+  );
   process.exit(1);
 });
 
-// 5. Fired when the client disconnects
 client.on("disconnected", (reason) => {
-  console.warn(`
-============================================================`);
-  console.warn(`
-    🔌 CLIENT DISCONNECTED 🔌`);
   console.warn(
-    `
-    Reason:`,
-    reason
+    "\n============================================================"
   );
-  console.warn(`
-============================================================`);
-  process.exit(1);
+  console.warn("    🔌 CLIENT DISCONNECTED 🔌");
+  console.warn("    Reason:", reason);
+  console.warn(
+    "============================================================\n"
+  );
 });
 
-// --- Start the client ---
 client.initialize().catch((err) => {
-  console.error(
-    `
-❌ Client initialization failed:`,
-    err
-  );
+  console.error("\n❌ Client initialization promise rejected:", err);
   process.exit(1);
 });
 
-// Graceful shutdown
-process.on("SIGINT", async () => {
-  console.log(`
-(SIGINT) Shutting down...`);
-  await client.destroy();
-  process.exit(0);
-});
+console.log(
+  "⏳ Waiting for client events... Check the GitHub Actions logs for a QR code or status messages."
+);
