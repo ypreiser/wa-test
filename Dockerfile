@@ -47,13 +47,13 @@ RUN mkdir /data && chown -R appuser:appgroup /data
 # Copy application files.
 COPY --chown=appuser:appgroup . .
 
+# Give the app user ownership of the app directory
+RUN chown -R appuser:appgroup /app
+
 # Switch to the non-root user.
 USER appuser
 
-# --- THE DEFINITIVE FIX ---
-# Run npm install and specify a local cache directory using the --cache flag.
-# This avoids all global permission issues.
-RUN npm install --cache /app/.npm
-# --- END FIX ---
+# Run npm install as the non-root user.
+RUN npm install
 
 CMD ["npm", "start"]
