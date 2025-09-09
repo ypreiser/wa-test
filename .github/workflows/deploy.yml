@@ -23,8 +23,6 @@ jobs:
           TARGET: "~/wa-test"
           EXCLUDE: "/.github/, /.git/"
 
-      # --- IMPROVED SCRIPT ---
-      # This now runs the container in the foreground, streaming logs directly.
       - name: Build and Run Test on Server
         uses: appleboy/ssh-action@master
         with:
@@ -39,7 +37,10 @@ jobs:
             echo "🛑 Stopping and removing any old test resources..."
             docker compose -f docker-compose.test.yml down --volumes || true
 
+            # --- FIX: Forcefully remove old session data to prevent permission errors ---
+            # We use sudo because the directory is owned by the root user.
+            echo "🔑 Clearing old session data on host to ensure a clean build context..."
+            sudo rm -rf wwebjs_auth_test
+
             echo "🚀 Building and running the test. Logs will stream below:"
-            # The '--build' flag ensures the image is rebuilt with the new code.
-            # Running 'up' without '-d' streams the logs until the container exits.
             docker compose -f docker-compose.test.yml up --build

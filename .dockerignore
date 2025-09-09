@@ -1,0 +1,13 @@
+# .dockerignore
+
+# This is the directory causing the permission error.
+# It contains temporary session data and should not be part of the image.
+wwebjs_auth_test
+
+# It's also good practice to ignore node_modules, as they should be
+# installed inside the container based on package.json.
+node_modules
+
+# Ignore version control and CI/CD files
+.git
+.github
