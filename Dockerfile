@@ -2,24 +2,29 @@
 
 # --- Build Stage ---
 FROM node:20-slim AS builder
-WORKDIR /usr/src/app
-COPY package*.json ./
-# Install dependencies
-RUN npm install
 
-# --- Production Stage ---
-FROM node:18-alpine
 WORKDIR /usr/src/app
 
-# Puppeteer requires specific dependencies to be installed.
-# This is a critical step for whatsapp-web.js to work on Alpine Linux.
+# Puppeteer/Chromium dependencies for Alpine Linux
 RUN apk add --no-cache udev ttf-freefont chromium
 
-COPY --from=builder /usr/src/app/node_modules ./node_modules
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the application code
 COPY . .
 
-# Tell Puppeteer to use the Chromium package we installed
+# Set environment variable for Puppeteer to find Chromium
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Run the app
+# --- FIX: Change ownership of the app directory ---
+# This allows the non-root user (specified in docker-compose) to create
+# files and directories needed for the session auth strategy.
+# 'node:node' is a standard user/group that exists in the base node image.
+# We will dynamically override this with our host UID/GID at runtime,
+# but this step ensures the directory is writable by a non-root user.
+RUN chown -R node:node .
+
+# Command to run the application
 CMD ["npm", "start"]
