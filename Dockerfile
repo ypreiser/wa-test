@@ -1,10 +1,10 @@
-# Dockerfile (Simplified and Correct)
+# Dockerfile (Final Corrected Version)
 
 FROM node:18-slim
 
 WORKDIR /app
 
-# Install system dependencies needed for Puppeteer.
+# 1. Install system dependencies as root
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     fonts-liberation \
@@ -38,22 +38,26 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user and group.
+# 2. Create the non-root user and group
 RUN addgroup --system appgroup && adduser --system --group appuser
 
-# Create and set permissions for the persistent data directory.
-RUN mkdir /data && chown -R appuser:appgroup /data
+# 3. Create the data directory for volumes
+RUN mkdir /data
 
-# Copy application files.
-COPY --chown=appuser:appgroup . .
-
-# Give the app user ownership of the app directory
-RUN chown -R appuser:appgroup /app
-
-# Switch to the non-root user.
-USER appuser
-
-# Run npm install as the non-root user.
+# 4. Copy package files and install dependencies AS ROOT.
+# This avoids all npm permission issues during the build.
+COPY package*.json ./
 RUN npm install
 
+# 5. Copy the rest of the application source code
+COPY . .
+
+# 6. THE CRUCIAL STEP: After all files are in place, change ownership
+# of the application and data directories to the non-root user.
+RUN chown -R appuser:appgroup /app /data
+
+# 7. Now, switch to the non-root user for runtime
+USER appuser
+
+# 8. Run the application
 CMD ["npm", "start"]
