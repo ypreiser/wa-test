@@ -1,9 +1,9 @@
 name: Deploy and Run WA Connection Test
 
-# Trigger this workflow on every push to the main branch
+# Trigger this workflow on every push to the master branch
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]
 
 jobs:
   deploy-and-test:
@@ -17,7 +17,7 @@ jobs:
 
       # 2. Copy files to the server
       - name: Sync Files to Server
-        uses: easingthemes/ssh-deploy@main
+        uses: easingthemes/ssh-deploy@master
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
