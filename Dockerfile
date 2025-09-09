@@ -1,11 +1,10 @@
-# Dockerfile (Final Version with NPM Cache Fix)
+# Dockerfile (Simplified and Correct)
 
 FROM node:18-slim
 
-RUN addgroup --system appgroup && adduser --system --group appuser
-
 WORKDIR /app
 
+# Install system dependencies needed for Puppeteer.
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     fonts-liberation \
@@ -39,23 +38,22 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
+# Create a non-root user and group.
+RUN addgroup --system appgroup && adduser --system --group appuser
+
+# Create and set permissions for the persistent data directory.
 RUN mkdir /data && chown -R appuser:appgroup /data
 
-COPY package*.json ./
+# Copy application files.
+COPY --chown=appuser:appgroup . .
 
-RUN chown -R appuser:appgroup /app
-
+# Switch to the non-root user.
 USER appuser
 
-# --- THE DEFINITIVE FIX for NPM permissions ---
-# Tell npm to use a cache directory inside our app directory, which we know is writable.
-# This prevents it from trying to write to a non-existent home directory.
-RUN npm config set cache /app/.npm --global
-
-# Now, npm install will succeed.
-RUN npm install
+# --- THE DEFINITIVE FIX ---
+# Run npm install and specify a local cache directory using the --cache flag.
+# This avoids all global permission issues.
+RUN npm install --cache /app/.npm
 # --- END FIX ---
-
-COPY . .
 
 CMD ["npm", "start"]
