@@ -5,10 +5,8 @@ services:
     build: .
     container_name: wa-connection-tester
     restart: "no"
-    # --- FIX: Run the container as the current host user ---
-    # This ensures that any files created in the volume are owned by you,
-    # not by the root user, which solves the permission errors.
-    user: "${UID}:${GID}"
+    # --- FIX: Use non-reserved variable names ---
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - wwebjs_auth_test_data:/usr/src/app/wwebjs_auth_test
 
