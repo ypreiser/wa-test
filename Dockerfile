@@ -1,14 +1,11 @@
-# Dockerfile (Corrected Order of Operations)
+# Dockerfile (Final Version with NPM Cache Fix)
 
 FROM node:18-slim
 
-# Create a non-root user and group FIRST.
 RUN addgroup --system appgroup && adduser --system --group appuser
 
-# Set the working directory. It will be created and owned by root.
 WORKDIR /app
 
-# Install system dependencies needed for Puppeteer.
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     fonts-liberation \
@@ -42,25 +39,23 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Create and set permissions for the persistent data directory.
 RUN mkdir /data && chown -R appuser:appgroup /data
 
-# --- THE DEFINITIVE FIX ---
-# Copy package files first, still as root.
 COPY package*.json ./
 
-# Change ownership of the ENTIRE /app directory to our non-root user.
-# This MUST be done before switching the user.
 RUN chown -R appuser:appgroup /app
 
-# Now, switch to the non-root user.
 USER appuser
 
-# As appuser, we can now run npm install, which will create node_modules inside /app.
-RUN npm install
+# --- THE DEFINITIVE FIX for NPM permissions ---
+# Tell npm to use a cache directory inside our app directory, which we know is writable.
+# This prevents it from trying to write to a non-existent home directory.
+RUN npm config set cache /app/.npm --global
 
-# Copy the rest of the application source code.
-COPY . .
+# Now, npm install will succeed.
+RUN npm install
 # --- END FIX ---
+
+COPY . .
 
 CMD ["npm", "start"]
