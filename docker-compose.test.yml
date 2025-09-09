@@ -1,13 +1,16 @@
-# /home/youruser/wa-test/docker-compose.test.yml
-
-version: "3.8"
+# docker-compose.test.yml
 
 services:
   wa-tester:
     build: .
     container_name: wa-connection-tester
-    restart: on-failure
-    # Mount a volume to persist the session data on the host machine.
-    # This allows you to inspect it and ensures it survives container restarts.
+    restart: "no"
+    # --- FIX: Run the container as the current host user ---
+    # This ensures that any files created in the volume are owned by you,
+    # not by the root user, which solves the permission errors.
+    user: "${UID}:${GID}"
     volumes:
-      - ./wwebjs_auth_test:/usr/src/app/wwebjs_auth_test
+      - wwebjs_auth_test_data:/usr/src/app/wwebjs_auth_test
+
+volumes:
+  wwebjs_auth_test_data:
