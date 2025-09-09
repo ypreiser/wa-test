@@ -2,7 +2,7 @@ name: Deploy and Run WA Connection Test
 
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]
 
 jobs:
   deploy-and-test:
