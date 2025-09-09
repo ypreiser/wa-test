@@ -1,6 +1,7 @@
 // /home/youruser/wa-test/index.js
 
-import { Client, LocalAuth } from "whatsapp-web.js";
+import pkg from "whatsapp-web.js";
+const { Client, LocalAuth } = pkg;
 import qrcode from "qrcode-terminal";
 
 console.log("🚀 Starting WhatsApp Connection Test...");
