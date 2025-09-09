@@ -1,12 +1,14 @@
-# Dockerfile
+# Dockerfile (Corrected Order of Operations)
 
-# Use the same base image as your production environment for consistency
 FROM node:18-slim
 
+# Create a non-root user and group FIRST.
+RUN addgroup --system appgroup && adduser --system --group appuser
+
+# Set the working directory. It will be created and owned by root.
 WORKDIR /app
 
-# Install the exact dependencies required by Puppeteer on Debian/Slim
-# This is the critical step that fixes the browser launch error.
+# Install system dependencies needed for Puppeteer.
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     fonts-liberation \
@@ -40,23 +42,25 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user and group, just like in your production file.
-RUN addgroup --system appgroup && adduser --system --group appuser
-
-# Create the /data directory for session persistence and give ownership to our new user.
+# Create and set permissions for the persistent data directory.
 RUN mkdir /data && chown -R appuser:appgroup /data
 
-# Switch to the non-root user for security.
+# --- THE DEFINITIVE FIX ---
+# Copy package files first, still as root.
+COPY package*.json ./
+
+# Change ownership of the ENTIRE /app directory to our non-root user.
+# This MUST be done before switching the user.
+RUN chown -R appuser:appgroup /app
+
+# Now, switch to the non-root user.
 USER appuser
 
-# Copy package files and install dependencies as the non-root user.
-# First, give the user permission to write to the current directory.
-COPY --chown=appuser:appgroup package*.json ./
+# As appuser, we can now run npm install, which will create node_modules inside /app.
 RUN npm install
 
-# Copy the rest of the application code.
-COPY --chown=appuser:appgroup . .
-
-# No PUPPETEER_EXECUTABLE_PATH needed; it will be found automatically.
+# Copy the rest of the application source code.
+COPY . .
+# --- END FIX ---
 
 CMD ["npm", "start"]
