@@ -1,7 +1,6 @@
-# /home/youruser/wa-test/Dockerfile
+# Dockerfile
 
-# --- Build Stage ---
-FROM node:20-slim AS builder
+FROM node:18-alpine
 
 WORKDIR /usr/src/app
 
