@@ -1,0 +1,54 @@
+name: Deploy and Run WA Connection Test
+
+# Trigger this workflow on every push to the main branch
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy-and-test:
+    name: Deploy to Server and Run Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Copy files to the server
+      - name: Sync Files to Server
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          SOURCE: "./"
+          TARGET: "~/wa-test" # Deploy to the wa-test directory in the user's home
+          EXCLUDE: "/.github/, /.git/"
+
+      # 3. Connect to server via SSH and run Docker commands
+      - name: Run Remote SSH Commands
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            echo "✅ Logged into server. Navigating to deployment directory..."
+            cd ~/wa-test
+
+            echo "🛑 Stopping and removing any old test container to ensure a clean run..."
+            docker compose -f docker-compose.test.yml down || true
+
+            echo "🔨 Building the new Docker image..."
+            docker compose -f docker-compose.test.yml build
+
+            echo "🚀 Starting the test container..."
+            docker compose -f docker-compose.test.yml up --detach
+
+            echo "⏳ Waiting 15 seconds for the container to initialize..."
+            sleep 15
+
+            echo "📋 Fetching container logs. Look for the QR code below:"
+            docker logs wa-connection-tester
