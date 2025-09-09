@@ -1,0 +1,13 @@
+# /home/youruser/wa-test/docker-compose.test.yml
+
+version: "3.8"
+
+services:
+  wa-tester:
+    build: .
+    container_name: wa-connection-tester
+    restart: on-failure
+    # Mount a volume to persist the session data on the host machine.
+    # This allows you to inspect it and ensures it survives container restarts.
+    volumes:
+      - ./wwebjs_auth_test:/usr/src/app/wwebjs_auth_test
