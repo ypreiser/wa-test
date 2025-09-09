@@ -1,18 +1,15 @@
+# .github/workflows/deploy.yml
 name: Deploy and Run WA Connection Test
-
 on:
   push:
     branches: ["master"]
-
 jobs:
   deploy-and-test:
     name: Deploy to Server and Run Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Sync Files to Server
         uses: easingthemes/ssh-deploy@main
         with:
@@ -22,7 +19,6 @@ jobs:
           SOURCE: "./"
           TARGET: "~/wa-test"
           EXCLUDE: "/.github/, /.git/"
-
       - name: Build and Run Test on Server
         uses: appleboy/ssh-action@master
         with:
@@ -37,10 +33,9 @@ jobs:
             echo "🛑 Stopping and removing any old test resources..."
             docker compose -f docker-compose.test.yml down --volumes || true
 
-            echo "🔑 Clearing old session data as the host user..."
-            rm -rf wwebjs_auth_test
+            # This cleanup command is no longer needed as we are not creating files in the project dir anymore.
+            # rm -rf wwebjs_auth_test
 
-            # --- FIX: Use non-reserved variable names ---
             export HOST_UID=$(id -u)
             export HOST_GID=$(id -g)
             echo "ℹ️ Running container as user HOST_UID=${HOST_UID}, HOST_GID=${HOST_GID}"

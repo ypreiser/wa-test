@@ -5,10 +5,9 @@ services:
     build: .
     container_name: wa-connection-tester
     restart: "no"
-    # --- FIX: Use non-reserved variable names ---
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
-      - wwebjs_auth_test_data:/usr/src/app/wwebjs_auth_test
+      - wwebjs_auth_test_data:/data
 
 volumes:
   wwebjs_auth_test_data:

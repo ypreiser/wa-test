@@ -6,16 +6,13 @@ import qrcode from "qrcode-terminal";
 
 console.log("🚀 Starting WhatsApp Connection Test...");
 
-// --- Configuration ---
-// Using LocalAuth to persist the session in a local file.
-// This is the simplest way to test session resumption.
 const client = new Client({
   authStrategy: new LocalAuth({
-    dataPath: "./wwebjs_auth_test", // Store session data in this subdirectory
+    // --- FIX: Use a dedicated, non-code directory for persistent data ---
+    dataPath: "/data",
   }),
   puppeteer: {
     headless: true,
-    // These args are CRITICAL for running in a Docker/Linux environment
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
